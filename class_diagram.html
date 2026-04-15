@@ -1,0 +1,102 @@
+<div id="cd" style="padding:8px 0"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#2a2830' : '#f0eefb',
+    primaryBorderColor: dark ? '#7f77dd' : '#534ab7',
+  },
+});
+const src = `classDiagram
+  class Department {
+    +int Dept_Id
+    +string Dept_Name
+    +string Dept_Description
+  }
+  class Employee {
+    +int Emp_Id
+    +string Emp_Fname
+    +string Emp_Lname
+    +string Emp_MobileNumber
+    +string Emp_Password
+    +int Dept_Id
+  }
+  class Project {
+    +int Proj_Id
+    +string Proj_Name
+    +string Proj_Description
+    +DateTime Proj_StartDate
+    +DateTime Proj_EndDate
+  }
+  class ProjectEmployee {
+    +int Proj_Id
+    +int Emp_Id
+    +DateTime JoinedDate
+  }
+  class TaskItem {
+    +int Task_Id
+    +string Task_Title
+    +string Task_Description
+    +WorkTaskStatus Task_Status
+    +WorkTaskPriority Task_Priority
+    +DateTime Task_DueDate
+    +int Proj_Id
+  }
+  class TaskAssignment {
+    +int Assignment_Id
+    +int Task_Id
+    +int Emp_Id
+    +DateTime AssignedDate
+  }
+  class WorkTaskStatus {
+    <<enumeration>>
+    Pending
+    InProgress
+    Done
+  }
+  class WorkTaskPriority {
+    <<enumeration>>
+    Low
+    Medium
+    High
+  }
+
+  Department "1" --> "0..*" Employee : has
+  Employee "0..*" --> "0..*" ProjectEmployee : joins via
+  Project "1" --> "0..*" ProjectEmployee : includes
+  Project "1" --> "0..*" TaskItem : contains
+  TaskItem "1" --> "0..*" TaskAssignment : tracked by
+  Employee "1" --> "0..*" TaskAssignment : assigned in
+  TaskItem --> WorkTaskStatus : status
+  TaskItem --> WorkTaskPriority : priority
+`;
+const { svg } = await mermaid.render('cd-svg', src);
+document.getElementById('cd').innerHTML = svg;
+document.querySelectorAll('#cd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs=[nums[0],nums[2],nums[4],nums[6]], ys=[nums[1],nums[3],nums[5],nums[7]];
+  const x=Math.min(...xs), y=Math.min(...ys), w=Math.max(...xs)-x, h=Math.max(...ys)-y;
+  const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rect.setAttribute('x',x); rect.setAttribute('y',y);
+  rect.setAttribute('width',w); rect.setAttribute('height',h);
+  rect.setAttribute('rx','8');
+  for (const a of ['fill','stroke','stroke-width','class','style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+</script>
